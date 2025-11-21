@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>点名系统</title>
+    <style>
+        /* ====================
+           全局风格定义 (Design System)
+           ==================== */
+        body {
+            /* 核心色板 */
+            --primary: #3B82F6;         /* 现代科技蓝 */
+            --primary-dark: #2563EB;    /* 深蓝 hover态 */
+            --primary-light: #EFF6FF;   /* 浅蓝 背景态 */
+
+            --text-main: #111827;       /* 深灰黑色 */
+            --text-secondary: #6B7280;  /* 次级灰 */
+            --text-tertiary: #9CA3AF;   /* 辅助灰 */
+
+            --bg-page: #F3F4F6;         /* 页面底色 */
+            --bg-card: #FFFFFF;         /* 卡片背景 */
+            --bg-input: #F9FAFB;        /* 输入框背景 */
+
+            --danger: #EF4444;          /* 警告/删除 */
+            --success: #10B981;         /* 成功 */
+
+            /* 阴影体系 */
+            --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(59, 130, 246, 0.15); /* 带颜色的辉光 */
+
+            /* 圆角 */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+
+            background-color: black;
+            font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .phone {
+            width: 375px;
+            height: 667px;
+            background-color: var(--bg-page);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .content {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .page {
+            display: none;
+            height: 100%;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        /* 底部导航栏 */
+        .nav-bar {
+            height: 60px;
+            background: var(--bg-card);
+            border-top: 1px solid #E5E7EB;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            flex: 1;
+            text-align: center;
+            padding: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--text-secondary);
+            font-size: 12px;
+        }
+
+        .nav-item.active {
+            color: var(--primary);
+        }
+
+        .nav-item:hover {
+            background: var(--primary-light);
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* 复制所有页面的样式 */
+        /* 这里需要包含所有五个页面的 CSS，但为了简洁，假设已包含 */
+        /* 省略重复的 CSS，实际需要合并 */
+
+        /* 通用样式 */
+        .container {
+            padding: 10px;
+            padding-bottom: 20px;
+        }
+
+        .header {
+            margin-bottom: 15px;
+            position: relative;
+            padding-top: 5px;
+        }
+
+        .title {
+            display: block;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* 导入页面样式 */
+        .upload-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            min-height: 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .upload-card.is-empty {
+            border: 2px dashed #E5E7EB;
+            background: #F9FAFB;
+            box-shadow: none;
+        }
+
+        .upload-card:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+            transform: scale(0.99);
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .icon-upload-wrapper {
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
+            position: relative;
+        }
+
+        .icon-arrow {
+            width: 2px;
+            height: 15px;
+            background: var(--primary);
+            position: relative;
+        }
+        .icon-arrow::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -5px;
+            width: 12px;
+            height: 12px;
+            border-top: 2px solid var(--primary);
+            border-right: 2px solid var(--primary);
+            transform: rotate(-45deg);
+        }
+        .icon-tray {
+            position: absolute;
+            bottom: 18px;
+            width: 16px;
+            height: 2px;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        .upload-main-text {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 5px;
+        }
+
+        .upload-sub-text {
+            font-size: 13px;
+            color: var(--text-tertiary);
+        }
+
+        .action-section {
+            margin-bottom: 20px;
+        }
+
+        .btn-main {
+            background: var(--primary);
+            color: #fff;
+            height: 50px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 700;
+            box-shadow: 0 5px 12px rgba(59, 130, 246, 0.4);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-main:hover {
+            transform: scale(0.97);
+            box-shadow: 0 3px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-icon { margin-right: 6px; font-size: 18px; }
+
+        .btn-glare {
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
+
+        /* 课程页面样式 */
+        .current-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: var(--radius-xl);
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #fff;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .current-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+            transform: rotate(45deg);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 40px;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(255,255,255,0.8);
+            animation: pulse 2s infinite;
+        }
+
+        .current-name {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .current-desc {
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 10px;
+            padding-left: 2px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .section-count {
+            margin-left: 6px;
+            font-size: 10px;
+            color: var(--text-tertiary);
+            background: #fff;
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+
+        .course-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .course-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid transparent;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .course-card.is-active {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        .course-card:hover {
+            transform: scale(0.98);
+            background-color: #F9FAFB;
+        }
+
+        .course-main {
+            flex: 1;
+            padding-right: 8px;
+        }
+
+        .course-name {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .course-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .course-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-indicator {
+            font-size: 10px;
+            color: var(--primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .check-icon {
+            font-size: 12px;
+        }
+
+        .btn-icon-delete {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #F3F4F6;
+            color: var(--text-tertiary);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .cross-icon {
+            font-size: 16px;
+            line-height: 1;
+            margin-top: -1px;
+        }
+
+        .btn-icon-delete:hover {
+            background: #FEF2F2;
+            color: var(--danger);
+            transform: rotate(90deg);
+        }
+
+        .form-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: 15px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .modern-input {
+            width: 100%;
+            height: 40px;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 0 12px;
+            font-size: 14px;
+            color: var(--text-main);
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+        }
+
+        .modern-textarea {
+            width: 100%;
+            height: 80px;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            font-size: 14px;
+            color: var(--text-main);
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
+        .modern-input:focus,
+        .modern-textarea:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            height: 40px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-primary.disabled {
+            background: #E5E7EB;
+            color: #9CA3AF;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .btn-primary:hover:not(.disabled) {
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn-shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shine 3s infinite;
+        }
+
+        /* 点名页面样式 */
+        .segment-control {
+            background: #E5E7EB;
+            padding: 3px;
+            border-radius: 10px;
+            display: flex;
+        }
+
+        .segment-item {
+            padding: 6px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .segment-item.active {
+            background: #fff;
+            color: var(--text-main);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+        .hero-section {
+            margin-bottom: 25px;
+        }
+
+        .student-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(25px);
+            opacity: 0.5;
+            z-index: 0;
+        }
+        .blob-1 { width: 130px; height: 130px; background: #DBEAFE; top: -20px; right: -20px; }
+        .blob-2 { width: 100px; height: 100px; background: #E0E7FF; bottom: -10px; left: -10px; }
+
+        .state-empty {
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .empty-icon-wrapper {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-page);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
+            position: relative;
+        }
+
+        .icon-dice {
+            font-size: 30px;
+            animation: pulse-emoji 2s infinite;
+        }
+
+        .empty-hint {
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+
+        /* 排名页面样式 */
+        .header-left {
+            flex: 1;
+        }
+
+        .page-title {
+            display: block;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .page-subtitle {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 3px;
+            display: block;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-export, .btn-refresh {
+            width: 40px;
+            height: 40px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-sm);
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-hover {
+            transform: scale(0.9);
+            opacity: 0.9;
+        }
+
+        .podium-section {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 20px;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .podium-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            width: 100px;
+            z-index: 1;
+        }
+
+        .rank-1 { z-index: 2; padding-bottom: 15px; }
+        .rank-2 { margin-right: -10px; }
+        .rank-3 { margin-left: -10px; }
+
+        .crown-icon {
+            font-size: 25px;
+            margin-bottom: -5px;
+            animation: float 3s ease-in-out infinite;
+            z-index: 3;
+        }
+
+        .avatar-wrapper {
+            position: relative;
+            border-radius: 50%;
+            padding: 3px;
+            background: #fff;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .ring-gold { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
+        .ring-silver { background: linear-gradient(135deg, #E5E7EB, #9CA3AF); }
+        .ring-bronze { background: linear-gradient(135deg, #FDBA74, #C2410C); }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--primary);
+            border: 2px solid #fff;
+        }
+
+        .avatar.large {
+            width: 65px;
+            height: 65px;
+            font-size: 25px;
+        }
+
+        .badge-rank {
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: var(--text-secondary);
+        }
+
+        .rank-1 .badge-rank { color: #D97706; }
+        .rank-2 .badge-rank { color: #6B7280; }
+        .rank-3 .badge-rank { color: #B45309; }
+
+        .name {
+            margin-top: 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+            max-width: 80px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .name.main-name { font-size: 15px; font-weight: 700; }
+
+        .score {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-family: "DIN Alternate", sans-serif;
+        }
+        .score.main-score { font-size: 18px; color: var(--primary); font-weight: bold; }
+
+        .shine-effect {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            animation: flash 0.5s ease-out forwards;
+            pointer-events: none;
+        }
+
+        .section-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .section-tag {
+            font-size: 11px;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .chart-scroll {
+            width: 100%;
+            height: 160px;
+            overflow-x: scroll;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            padding-bottom: 5px;
+            min-width: 100%;
+        }
+
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 12px;
+            width: 30px;
+            flex-shrink: 0;
+        }
+
+        .bar-value {
+            font-size: 10px;
+            color: var(--text-tertiary);
+            margin-bottom: 4px;
+            opacity: 0;
+            transform: translateY(5px);
+            transition: all 0.3s;
+        }
+
+        .bar-group:hover .bar-value {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .bar-track {
+            height: 110px;
+            width: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .bar-fill {
+            width: 8px;
+            border-radius: 10px;
+            min-height: 4px;
+            transition: height 1s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+
+        .fill-hot { background: linear-gradient(to top, #F59E0B, #FCD34D); }
+        .fill-cool { background: linear-gradient(to top, #2563EB, #60A5FA); }
+
+        .bar-label {
+            margin-top: 6px;
+            font-size: 10px;
+            color: var(--text-secondary);
+            width: 100%;
+            text-align: center;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .list-section {
+            margin-bottom: 20px;
+        }
+
+        .list-header {
+            display: flex;
+            padding: 0 12px 10px;
+            font-size: 12px;
+            color: var(--text-tertiary);
+        }
+        .align-left { flex: 1; padding-left: 10px; }
+        .align-right { width: 60px; text-align: right; }
+
+        .rank-row {
+            display: flex;
+            align-items: center;
+            background: var(--bg-card);
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .rank-row:hover {
+            transform: scale(0.98);
+            background: #F9FAFB;
+        }
+
+        .col-rank {
+            width: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .rank-num {
+            width: 22px;
+            height: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            border-radius: 6px;
+        }
+
+        .normal-rank {
+            background: transparent;
+            color: var(--text-tertiary);
+            font-weight: 600;
+        }
+
+        .rank-num.top-rank {
+            color: #fff;
+            font-size: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.15);
+        }
+
+        .rank-num.rank-1 { background: linear-gradient(135deg, #FCD34D, #F59E0B); }
+        .rank-num.rank-2 { background: linear-gradient(135deg, #E5E7EB, #9CA3AF); }
+        .rank-num.rank-3 { background: linear-gradient(135deg, #FDBA74, #C2410C); }
+
+        .col-info {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+        }
+
+        .row-avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #F3F4F6;
+            color: var(--text-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            font-weight: bold;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .info-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .student-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .student-count {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            margin-top: 2px;
+        }
+
+        .col-score {
+            width: 60px;
+            text-align: right;
+        }
+
+        .score-num {
+            font-size: 16px;
+            font-weight: 800;
+            color: var(--primary);
+            font-family: -apple-system, sans-serif;
+        }
+
+        /* 设置页面样式 */
+        .header-left {
+            flex: 1;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-mode {
+            padding: 8px 16px;
+            background: #fff;
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 50px;
+            border: 1px solid #E5E7EB;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-mode.active {
+            background: var(--text-main);
+            color: #fff;
+            border-color: var(--text-main);
+        }
+
+        .btn-add {
+            padding: 8px 18px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .icon-plus { font-size: 16px; margin-right: 4px; line-height: 1; }
+
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .student-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .student-card:hover {
+            transform: scale(0.99);
+            background: #F9FAFB;
+        }
+
+        .avatar-box {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #E0E7FF, #DBEAFE);
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .info-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-top {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-right: 8px;
+        }
+
+        .tag-major {
+            font-size: 10px;
+            color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .id-text {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-family: Monaco, Consolas, monospace;
+        }
+
+        .actions-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+            background: #F3F4F6;
+            cursor: pointer;
+        }
+
+        .btn-icon.edit { color: var(--primary); }
+        .btn-icon.delete { color: var(--text-tertiary); }
+
+        .btn-icon.edit:hover { background: var(--primary-light); }
+        .btn-icon.delete:hover { background: #FEF2F2; color: var(--danger); }
+
+        /* 动画 */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            70% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 200%; }
+            100% { left: 200%; }
+        }
+
+        @keyframes pulse-emoji {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        @keyframes flash {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        /* 加分系统样式 */
+        .scoring-panel {
+            margin-top: 20px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 15px;
+        }
+
+        .panel-header {
+            margin-bottom: 10px;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .panel-body {
+            display: flex;
+            justify-content: center;
+        }
+
+        .score-options {
+            display: flex;
+            gap: 15px;
+        }
+
+        .score-btn {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            border-radius: 25px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .score-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            transform: scale(1.05);
+        }
+
+        .score-btn:active {
+            transform: scale(0.95);
+        }
+
+        .score-icon {
+            font-size: 16px;
+        }
+
+        /* 出席确认样式 */
+        .attendance-panel {
+            margin-top: 20px;
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            padding: 15px;
+        }
+
+        .attendance-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 16px;
+            color: var(--text-main);
+        }
+
+        .attendance-checkbox {
+            display: none;
+        }
+
+        .checkmark {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--primary);
+            border-radius: 4px;
+            margin-right: 12px;
+            position: relative;
+            background: #fff;
+            transition: all 0.3s;
+        }
+
+        .attendance-checkbox:checked + .checkmark {
+            background: var(--primary);
+        }
+
+        .attendance-checkbox:checked + .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .label-text {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="content">
+            <!-- 导入页面 -->
+            <div id="import" class="page active">
+                <div class="container">
+                    <!-- 头部引导 -->
+                    <div class="header fade-in">
+                        <div class="header-content">
+                            <span class="title">导入学生名单</span>
+                            <span class="subtitle">支持 .xlsx, .xls 格式，单次最大 5MB</span>
+                        </div>
+                    </div>
+
+                    <!-- 核心上传区 -->
+                    <div class="upload-card is-empty slide-up" style="animation-delay: 0.1s;">
+                        <!-- 状态 A: 未选择文件 (空状态) -->
+                        <div class="empty-state">
+                            <!-- CSS 纯代码绘制的云朵图标，无需图片资源 -->
+                            <div class="icon-upload-wrapper">
+                                <div class="icon-arrow"></div>
+                                <div class="icon-tray"></div>
+                            </div>
+                            <span class="upload-main-text">点击上传 Excel 文件</span>
+                            <span class="upload-sub-text">或将文件拖拽至此处</span>
+                        </div>
+                    </div>
+
+                    <!-- 底部操作按钮 -->
+                    <div class="action-section slide-up" style="animation-delay: 0.2s;">
+                        <button class="btn-main">
+                            <span class="btn-icon">⚡️</span>
+                            <span>开始点名</span>
+                            <div class="btn-glare"></div>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 课程页面 -->
+            <div id="course" class="page">
+                <div class="container">
+                    <!-- 头部 -->
+                    <div class="header fade-in">
+                        <div class="header-content">
+                            <span class="title">课程选择</span>
+                            <span class="subtitle">管理您的学习计划与课程安排</span>
+                        </div>
+                        <!-- 装饰性元素（可选，如不需要可删） -->
+                        <div class="header-decoration"></div>
+                    </div>
+
+                    <!-- 当前选中的课程 -->
+                    <div class="current-card slide-up" style="animation-delay: 0.1s;">
+                        <div class="card-header">
+                            <span class="tag">正在进行</span>
+                            <div class="status-dot"></div>
+                        </div>
+                        <span class="current-name">数学</span>
+                        <span class="current-desc">高等数学课程</span>
+                    </div>
+
+                    <!-- 课程列表 -->
+                    <div class="section slide-up" style="animation-delay: 0.2s;">
+                        <div class="section-header">
+                            <span class="section-title">课程列表</span>
+                            <span class="section-count">2门</span>
+                        </div>
+
+                        <div class="course-list">
+                            <div class="course-card is-active" data-course-id="1" data-name="数学" data-desc="高等数学课程">
+                                <div class="course-main">
+                                    <span class="course-name">数学</span>
+                                    <span class="course-desc">高等数学课程</span>
+                                </div>
+            
+                                <div class="course-actions">
+                                    <!-- 选中状态指示器 -->
+                                    <div class="check-indicator">
+                                        <span class="check-icon">✓</span> 已选
+                                    </div>
+                                    <!-- 删除按钮 -->
+                                    <div class="btn-icon-delete" data-course-id="1">
+                                        <span class="cross-icon">×</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="course-card" data-course-id="2" data-name="语文" data-desc="语文基础课程">
+                                <div class="course-main">
+                                    <span class="course-name">语文</span>
+                                    <span class="course-desc">语文基础课程</span>
+                                </div>
+            
+                                <div class="course-actions">
+                                    <!-- 删除按钮 -->
+                                    <div class="btn-icon-delete" data-course-id="2">
+                                        <span class="cross-icon">×</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 创建新课程 -->
+                    <div class="section slide-up" style="animation-delay: 0.3s;">
+                        <span class="section-title">新建课程</span>
+                        <div class="form-card">
+                            <div class="input-group">
+                                <input
+                                    class="modern-input"
+                                    placeholder="输入课程名称"
+                                    value=""
+                                />
+                            </div>
+                            <div class="input-group">
+                                <textarea
+                                    class="modern-textarea"
+                                    placeholder="添加描述（可选）"
+                                ></textarea>
+                            </div>
+                            <button class="btn-primary">
+                                创建新课程
+                                <div class="btn-shine"></div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 点名页面 -->
+            <div id="roll-call" class="page">
+                <div class="container">
+                    <!-- 顶部导航 -->
+                    <div class="header fade-in">
+                        <div class="header-text">
+                            <span class="title">课堂点名</span>
+                            <span class="subtitle">随机抽取 • 公平记录</span>
+                        </div>
+
+                        <div class="segment-control">
+                            <div class="segment-item active">随机</div>
+                            <div class="segment-item">顺序</div>
+                        </div>
+                    </div>
+
+                    <!-- 核心展示区：抽奖卡牌 -->
+                    <div class="hero-section slide-up" style="animation-delay: 0.1s;">
+                        <div class="student-card is-empty">
+                            <!-- 背景装饰光斑 -->
+                            <div class="bg-blob blob-1"></div>
+                            <div class="bg-blob blob-2"></div>
+
+                            <!-- 状态 A: 待机中 -->
+                            <div class="state-empty">
+                                <div class="empty-icon-wrapper">
+                                    <span class="icon-dice">🎲</span>
+                                </div>
+                                <span class="empty-hint">点击按钮开始抽取</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 核心操作按钮 -->
+                    <div class="action-section slide-up" style="animation-delay: 0.2s;">
+                        <button class="btn-main">
+                            <span class="btn-icon">⚡️</span>
+                            <span>开始点名</span>
+                            <div class="btn-glare"></div>
+                        </button>
+                    </div>
+
+                    <!-- 加分系统 -->
+                    <div class="scoring-panel slide-up" style="animation-delay: 0.3s;">
+                        <div class="panel-header">
+                            <span class="panel-title">答题加分</span>
+                        </div>
+
+                        <div class="panel-body">
+                            <div class="score-options">
+                                <button class="score-btn" data-points="1.5">
+                                    <span class="score-icon">⭐</span>
+                                    <span>+1.5分</span>
+                                </button>
+                                <button class="score-btn" data-points="3">
+                                    <span class="score-icon">🏆</span>
+                                    <span>+3分</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 到达课堂确认 -->
+                    <div class="attendance-panel slide-up" style="animation-delay: 0.4s;">
+                        <div class="panel-header">
+                            <span class="panel-title">课堂出席</span>
+                        </div>
+
+                        <div class="panel-body">
+                            <label class="attendance-label">
+                                <input type="checkbox" class="attendance-checkbox" id="attendance-check">
+                                <span class="checkmark"></span>
+                                <span class="label-text">是否到达课堂</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 排名页面 -->
+            <div id="ranking" class="page">
+                <div class="container">
+                    <!-- 顶部栏 -->
+                    <div class="header fade-in">
+                        <div class="header-left">
+                            <span class="page-title">积分榜</span>
+                            <span class="page-subtitle">今天你拿分了吗</span>
+                        </div>
+                        <div class="header-buttons">
+                            <div class="btn-export">
+                                <span class="icon-export">📊</span>
+                            </div>
+                            <div class="btn-refresh">
+                                <span class="icon-refresh">↻</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 领奖台区域 (Top 3) -->
+                    <div class="podium-section slide-up" style="animation-delay: 0.1s;">
+                        <!-- 亚军 (Rank 2) -->
+                        <div class="podium-item rank-2">
+                            <div class="avatar-wrapper ring-silver">
+                                <span class="badge-rank">2</span>
+                                <div class="avatar">李</div>
+                            </div>
+                            <span class="name">李明</span>
+                            <span class="score">85</span>
+                        </div>
+
+                        <!-- 冠军 (Rank 1) -->
+                        <div class="podium-item rank-1">
+                            <span class="crown-icon">👑</span>
+                            <div class="avatar-wrapper ring-gold">
+                                <span class="badge-rank">1</span>
+                                <div class="avatar large">张</div>
+                                <!-- 光效装饰 -->
+                                <div class="shine-effect"></div>
+                            </div>
+                            <span class="name main-name">张三</span>
+                            <span class="score main-score">95</span>
+                        </div>
+
+                        <!-- 季军 (Rank 3) -->
+                        <div class="podium-item rank-3">
+                            <div class="avatar-wrapper ring-bronze">
+                                <span class="badge-rank">3</span>
+                                <div class="avatar">王</div>
+                            </div>
+                            <span class="name">王五</span>
+                            <span class="score">80</span>
+                        </div>
+                    </div>
+
+                    <!-- 趋势分析 (图表) -->
+                    <div class="section-card slide-up" style="animation-delay: 0.2s;">
+                        <div class="card-header">
+                            <span class="section-title">积分趋势</span>
+                            <span class="section-tag">Top 10</span>
+                        </div>
+                        <div class="chart-scroll">
+                            <div class="chart-container">
+                                <div class="bar-group">
+                                    <span class="bar-value">95</span>
+                                    <div class="bar-track">
+                                        <div class="bar-fill fill-hot" style="height: 100%;"></div>
+                                    </div>
+                                    <span class="bar-label">张三</span>
+                                </div>
+                                <div class="bar-group">
+                                    <span class="bar-value">85</span>
+                                    <div class="bar-track">
+                                        <div class="bar-fill fill-hot" style="height: 89%;"></div>
+                                    </div>
+                                    <span class="bar-label">李明</span>
+                                </div>
+                                <div class="bar-group">
+                                    <span class="bar-value">80</span>
+                                    <div class="bar-track">
+                                        <div class="bar-fill fill-hot" style="height: 84%;"></div>
+                                    </div>
+                                    <span class="bar-label">王五</span>
+                                </div>
+                                <div class="bar-group">
+                                    <span class="bar-value">70</span>
+                                    <div class="bar-track">
+                                        <div class="bar-fill fill-cool" style="height: 74%;"></div>
+                                    </div>
+                                    <span class="bar-label">赵六</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详细名单列表 -->
+                    <div class="list-section slide-up" style="animation-delay: 0.3s;">
+                        <div class="list-header">
+                            <span>名次</span>
+                            <span class="align-left">学员信息</span>
+                            <span class="align-right">积分</span>
+                        </div>
+
+                        <div class="rank-row">
+                            <div class="col-rank">
+                                <div class="rank-num top-rank rank-1">1</div>
+                            </div>
+                            <div class="col-info">
+                                <div class="row-avatar">张</div>
+                                <div class="info-text">
+                                    <span class="student-name">张三</span>
+                                    <span class="student-count">点名 10 次</span>
+                                </div>
+                            </div>
+                            <div class="col-score">
+                                <span class="score-num">95</span>
+                            </div>
+                        </div>
+
+                        <div class="rank-row">
+                            <div class="col-rank">
+                                <div class="rank-num top-rank rank-2">2</div>
+                            </div>
+                            <div class="col-info">
+                                <div class="row-avatar">李</div>
+                                <div class="info-text">
+                                    <span class="student-name">李明</span>
+                                    <span class="student-count">点名 8 次</span>
+                                </div>
+                            </div>
+                            <div class="col-score">
+                                <span class="score-num">85</span>
+                            </div>
+                        </div>
+
+                        <div class="rank-row">
+                            <div class="col-rank">
+                                <div class="rank-num top-rank rank-3">3</div>
+                            </div>
+                            <div class="col-info">
+                                <div class="row-avatar">王</div>
+                                <div class="info-text">
+                                    <span class="student-name">王五</span>
+                                    <span class="student-count">点名 7 次</span>
+                                </div>
+                            </div>
+                            <div class="col-score">
+                                <span class="score-num">80</span>
+                            </div>
+                        </div>
+
+                        <div class="rank-row">
+                            <div class="col-rank">
+                                <div class="rank-num normal-rank">4</div>
+                            </div>
+                            <div class="col-info">
+                                <div class="row-avatar">赵</div>
+                                <div class="info-text">
+                                    <span class="student-name">赵六</span>
+                                    <span class="student-count">点名 5 次</span>
+                                </div>
+                            </div>
+                            <div class="col-score">
+                                <span class="score-num">70</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 设置页面 -->
+            <div id="settings" class="page">
+                <div class="container">
+                    <!-- 顶部 Header -->
+                    <div class="header fade-in">
+                        <div class="header-left">
+                            <span class="title">学生名册</span>
+                            <span class="subtitle">共 4 位成员在档</span>
+                        </div>
+
+                        <!-- 顶部操作区 -->
+                        <div class="header-right">
+                            <!-- 切换多选模式 -->
+                            <div class="btn-mode">
+                                <span>管理</span>
+                            </div>
+
+                            <!-- 添加按钮 (仅在普通模式显示) -->
+                            <div class="btn-add">
+                                <span class="icon-plus">+</span> 新增
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 学生列表 -->
+                    <div class="list-container slide-up" style="animation-delay: 0.1s;">
+                        <div class="list-wrapper">
+                            <div class="student-card">
+                                <!-- 头像区域 -->
+                                <div class="avatar-box">
+                                    <span>张</span>
+                                </div>
+
+                                <!-- 信息区域 -->
+                                <div class="info-box">
+                                    <div class="info-top">
+                                        <span class="name">张三</span>
+                                        <span class="tag-major">计算机2301</span>
+                                    </div>
+                                    <span class="id-text">ID: 2023001</span>
+                                </div>
+
+                                <!-- 操作区域 -->
+                                <div class="actions-box">
+                                    <div class="btn-icon edit">✎</div>
+                                    <div class="btn-icon delete">×</div>
+                                </div>
+                            </div>
+
+                            <div class="student-card">
+                                <div class="avatar-box">
+                                    <span>李</span>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-top">
+                                        <span class="name">李四</span>
+                                        <span class="tag-major">计算机2302</span>
+                                    </div>
+                                    <span class="id-text">ID: 2023002</span>
+                                </div>
+                                <div class="actions-box">
+                                    <div class="btn-icon edit">✎</div>
+                                    <div class="btn-icon delete">×</div>
+                                </div>
+                            </div>
+
+                            <div class="student-card">
+                                <div class="avatar-box">
+                                    <span>王</span>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-top">
+                                        <span class="name">王五</span>
+                                        <span class="tag-major">计算机2303</span>
+                                    </div>
+                                    <span class="id-text">ID: 2023003</span>
+                                </div>
+                                <div class="actions-box">
+                                    <div class="btn-icon edit">✎</div>
+                                    <div class="btn-icon delete">×</div>
+                                </div>
+                            </div>
+
+                            <div class="student-card">
+                                <div class="avatar-box">
+                                    <span>赵</span>
+                                </div>
+                                <div class="info-box">
+                                    <div class="info-top">
+                                        <span class="name">赵六</span>
+                                        <span class="tag-major">计算机2304</span>
+                                    </div>
+                                    <span class="id-text">ID: 2023004</span>
+                                </div>
+                                <div class="actions-box">
+                                    <div class="btn-icon edit">✎</div>
+                                    <div class="btn-icon delete">×</div>
+                                </div>
+                            </div>
+
+                            <!-- 底部垫片 -->
+                            <div style="height: 30px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部导航栏 -->
+        <div class="nav-bar">
+            <div class="nav-item active" data-page="import">
+                <span class="nav-icon">📥</span>
+                <span>导入</span>
+            </div>
+            <div class="nav-item" data-page="course">
+                <span class="nav-icon">📚</span>
+                <span>课程</span>
+            </div>
+            <div class="nav-item" data-page="roll-call">
+                <span class="nav-icon">🎯</span>
+                <span>点名</span>
+            </div>
+            <div class="nav-item" data-page="ranking">
+                <span class="nav-icon">🏆</span>
+                <span>排名</span>
+            </div>
+            <div class="nav-item" data-page="settings">
+                <span class="nav-icon">⚙️</span>
+                <span>设置</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 导航切换逻辑
+        const navItems = document.querySelectorAll('.nav-item');
+        const pages = document.querySelectorAll('.page');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const pageId = item.getAttribute('data-page');
+
+                // 移除所有 active 类
+                navItems.forEach(nav => nav.classList.remove('active'));
+                pages.forEach(page => page.classList.remove('active'));
+
+                // 添加 active 类
+                item.classList.add('active');
+                document.getElementById(pageId).classList.add('active');
+            });
+        });
+
+        // 课程选择逻辑
+        const courseCards = document.querySelectorAll('#course .course-card');
+        const currentCard = document.querySelector('#course .current-card');
+
+        courseCards.forEach(card => {
+            card.addEventListener('click', () => {
+                // 移除所有选中状态
+                courseCards.forEach(c => c.classList.remove('is-active'));
+                courseCards.forEach(c => {
+                    const indicator = c.querySelector('.check-indicator');
+                    if (indicator) indicator.remove();
+                });
+
+                // 添加选中状态
+                card.classList.add('is-active');
+                const actions = card.querySelector('.course-actions');
+                if (!actions.querySelector('.check-indicator')) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'check-indicator';
+                    indicator.innerHTML = '<span class="check-icon">✓</span> 已选';
+                    actions.insertBefore(indicator, actions.firstChild);
+                }
+
+                // 更新顶部当前课程
+                const name = card.getAttribute('data-name');
+                const desc = card.getAttribute('data-desc');
+                currentCard.querySelector('.current-name').textContent = name;
+                currentCard.querySelector('.current-desc').textContent = desc;
+            });
+        });
+
+        // 点名模式切换逻辑
+        const segmentItems = document.querySelectorAll('#roll-call .segment-item');
+
+        segmentItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // 移除所有 active 类
+                segmentItems.forEach(s => s.classList.remove('active'));
+
+                // 添加 active 类
+                item.classList.add('active');
+            });
+        });
+
+        // 加分系统逻辑
+        const scoreBtns = document.querySelectorAll('.score-btn');
+
+        scoreBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const points = btn.getAttribute('data-points');
+                alert(`加分成功！获得 ${points} 分`);
+                // 这里可以添加实际的加分逻辑
+            });
+        });
+
+        // 出席确认逻辑
+        const attendanceCheck = document.getElementById('attendance-check');
+
+        attendanceCheck.addEventListener('change', () => {
+            if (attendanceCheck.checked) {
+                alert('已确认到达课堂');
+            } else {
+                alert('取消到达确认');
+            }
+            // 这里可以添加实际的出席记录逻辑
+        });
+    </script>
+</body>
+</html>

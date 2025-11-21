@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程选择</title>
+    <style>
+        /* ====================
+           全局风格定义 (Design System)
+           ==================== */
+        body {
+            /* 核心色板 */
+            --primary: #3B82F6;         /* 现代科技蓝 */
+            --primary-dark: #2563EB;    /* 深蓝 hover态 */
+            --primary-light: #EFF6FF;   /* 浅蓝 背景态 */
+
+            --text-main: #111827;       /* 深灰黑色 */
+            --text-secondary: #6B7280;  /* 次级灰 */
+            --text-tertiary: #9CA3AF;   /* 辅助灰 */
+
+            --bg-page: #F3F4F6;         /* 页面底色 */
+            --bg-card: #FFFFFF;         /* 卡片背景 */
+            --bg-input: #F9FAFB;        /* 输入框背景 */
+
+            --danger: #EF4444;          /* 警告/删除 */
+            --success: #10B981;         /* 成功 */
+
+            /* 阴影体系 */
+            --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(59, 130, 246, 0.15); /* 带颜色的辉光 */
+
+            /* 圆角 */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+
+            background-color: black;
+            font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .phone {
+            width: 375px;
+            height: 667px;
+            background-color: var(--bg-page);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ====================
+           布局容器
+           ==================== */
+        .container {
+            padding: 10px;
+            padding-bottom: 20px;
+        }
+
+        /* ====================
+           头部区域
+           ==================== */
+        .header {
+            margin-bottom: 15px;
+            position: relative;
+            padding-top: 5px;
+        }
+
+        .title {
+            display: block;
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            line-height: 1.2;
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+
+        /* ====================
+           当前课程卡片 (Hero Card)
+           ==================== */
+        .current-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: var(--radius-xl);
+            padding: 15px;
+            margin-bottom: 20px;
+            color: #fff;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 玻璃拟态光泽纹理 */
+        .current-card::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 60%);
+            transform: rotate(45deg);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .tag {
+            font-size: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 40px;
+            font-weight: 500;
+            backdrop-filter: blur(4px);
+        }
+
+        .status-dot {
+            width: 5px;
+            height: 5px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(255,255,255,0.8);
+            animation: pulse 2s infinite;
+        }
+
+        .current-name {
+            display: block;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .current-desc {
+            font-size: 12px;
+            opacity: 0.9;
+            line-height: 1.5;
+        }
+
+        /* ====================
+           通用板块与列表
+           ==================== */
+        .section {
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 10px;
+            padding-left: 2px;
+        }
+
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .section-count {
+            margin-left: 6px;
+            font-size: 10px;
+            color: var(--text-tertiary);
+            background: #fff;
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+
+        .course-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        /* 课程卡片项 */
+        .course-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid transparent;
+            position: relative;
+            cursor: pointer;
+        }
+
+        /* 选中态 */
+        .course-card.is-active {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 点击态 */
+        .course-card:hover {
+            transform: scale(0.98);
+            background-color: #F9FAFB;
+        }
+
+        .course-main {
+            flex: 1;
+            padding-right: 8px;
+        }
+
+        .course-name {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .course-desc {
+            font-size: 11px;
+            color: var(--text-secondary);
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 1;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* 操作区 */
+        .course-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .check-indicator {
+            font-size: 10px;
+            color: var(--primary);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+
+        .check-icon {
+            font-size: 12px;
+        }
+
+        /* 删除按钮微交互 */
+        .btn-icon-delete {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background: #F3F4F6;
+            color: var(--text-tertiary);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .cross-icon {
+            font-size: 16px;
+            line-height: 1;
+            margin-top: -1px; /* 视觉修正 */
+        }
+
+        .btn-icon-delete:hover {
+            background: #FEF2F2;
+            color: var(--danger);
+            transform: rotate(90deg);
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 30px 0;
+            color: var(--text-tertiary);
+            background: #fff;
+            border-radius: var(--radius-lg);
+            border: 1px dashed #E5E7EB;
+            font-size: 12px;
+        }
+
+        /* ====================
+           表单区域
+           ==================== */
+        .form-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-xl);
+            padding: 15px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .input-group {
+            margin-bottom: 12px;
+        }
+
+        .modern-input {
+            width: 100%;
+            height: 40px;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 0 12px;
+            font-size: 14px;
+            color: var(--text-main);
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+        }
+
+        .modern-textarea {
+            width: 100%;
+            height: 80px;
+            background: var(--bg-input);
+            border-radius: var(--radius-md);
+            padding: 12px;
+            font-size: 14px;
+            color: var(--text-main);
+            transition: all 0.3s;
+            border: 1px solid transparent;
+            box-sizing: border-box;
+            resize: vertical;
+        }
+
+        .modern-input:focus,
+        .modern-textarea:focus {
+            background: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .input-placeholder {
+            color: var(--text-tertiary);
+        }
+
+        /* 主按钮 */
+        .btn-primary {
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            height: 40px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-primary.disabled {
+            background: #E5E7EB;
+            color: #9CA3AF;
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+
+        .btn-primary:hover:not(.disabled) {
+            transform: scale(0.97);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+
+        /* 按钮光泽动画 */
+        .btn-shine {
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 50%;
+            height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            animation: shine 3s infinite;
+        }
+
+        /* ====================
+           动画关键帧
+           ==================== */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            70% { box-shadow: 0 0 0 4px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 200%; }
+            100% { left: 200%; }
+        }
+
+        .slide-up {
+            animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            opacity: 0; /* 初始隐藏 */
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        /* Toast */
+        .toast-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="container">
+        <!-- 头部 -->
+        <div class="header fade-in">
+            <div class="header-content">
+                <span class="title">课程选择</span>
+                <span class="subtitle">管理您的学习计划与课程安排</span>
+            </div>
+            <!-- 装饰性元素（可选，如不需要可删） -->
+            <div class="header-decoration"></div>
+        </div>
+
+        <!-- 当前选中的课程 -->
+        <div class="current-card slide-up" style="animation-delay: 0.1s;">
+            <div class="card-header">
+                <span class="tag">正在进行</span>
+                <div class="status-dot"></div>
+            </div>
+            <span class="current-name">数学</span>
+            <span class="current-desc">高等数学课程</span>
+        </div>
+
+        <!-- 课程列表 -->
+        <div class="section slide-up" style="animation-delay: 0.2s;">
+            <div class="section-header">
+                <span class="section-title">课程列表</span>
+                <span class="section-count">2门</span>
+            </div>
+
+            <div class="course-list">
+                <div class="course-card is-active" data-course-id="1">
+                    <div class="course-main">
+                        <span class="course-name">数学</span>
+                        <span class="course-desc">高等数学课程</span>
+                    </div>
+
+                    <div class="course-actions">
+                        <!-- 选中状态指示器 -->
+                        <div class="check-indicator">
+                            <span class="check-icon">✓</span> 已选
+                        </div>
+                        <!-- 删除按钮 -->
+                        <div class="btn-icon-delete" data-course-id="1">
+                            <span class="cross-icon">×</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="course-card" data-course-id="2">
+                    <div class="course-main">
+                        <span class="course-name">语文</span>
+                        <span class="course-desc">语文基础课程</span>
+                    </div>
+
+                    <div class="course-actions">
+                        <!-- 删除按钮 -->
+                        <div class="btn-icon-delete" data-course-id="2">
+                            <span class="cross-icon">×</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 创建新课程 -->
+        <div class="section slide-up" style="animation-delay: 0.3s;">
+            <span class="section-title">新建课程</span>
+            <div class="form-card">
+                <div class="input-group">
+                    <input
+                        class="modern-input"
+                        placeholder="输入课程名称"
+                        placeholder-class="input-placeholder"
+                        value=""
+                    />
+                </div>
+                <div class="input-group">
+                    <textarea
+                        class="modern-textarea"
+                        placeholder="添加描述（可选）"
+                        placeholder-class="input-placeholder"
+                    ></textarea>
+                </div>
+                <button
+                    class="btn-primary"
+                >
+                    创建新课程
+                    <div class="btn-shine"></div>
+                </button>
+            </div>
+        </div>
+
+        <!-- 反馈信息 Toast -->
+        <!-- 假设不显示 -->
+        </div>
+    </div>
+</body>
+</html>

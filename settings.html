@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学生名册</title>
+    <style>
+        /* ====================
+           全局风格定义
+           ==================== */
+        body {
+            /* 核心色板 */
+            --primary: #3B82F6;         /* 现代科技蓝 */
+            --primary-dark: #2563EB;    /* 深蓝 hover态 */
+            --primary-light: #EFF6FF;   /* 浅蓝 背景态 */
+
+            --text-main: #111827;       /* 深灰黑色 */
+            --text-secondary: #6B7280;  /* 次级灰 */
+            --text-tertiary: #9CA3AF;   /* 辅助灰 */
+
+            --bg-page: #F3F4F6;         /* 页面底色 */
+            --bg-card: #FFFFFF;         /* 卡片背景 */
+
+            --danger: #EF4444;          /* 警告/删除 */
+            --danger-light: #FEF2F2;    /* 危险背景 */
+
+            /* 阴影体系 */
+            --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(59, 130, 246, 0.15); /* 带颜色的辉光 */
+
+            /* 圆角 */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+
+            background-color: black;
+            font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .phone {
+            width: 375px;
+            height: 667px;
+            background-color: var(--bg-page);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ====================
+           布局容器
+           ==================== */
+        .container {
+            padding: 10px;
+            padding-bottom: 20px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        /* ====================
+           Header
+           ==================== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            display: block;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 3px;
+            display: block;
+        }
+
+        .header-right {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 模式切换按钮 */
+        .btn-mode {
+            padding: 8px 16px;
+            background: #fff;
+            color: var(--text-main);
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 50px;
+            border: 1px solid #E5E7EB;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .btn-mode.active {
+            background: var(--text-main);
+            color: #fff;
+            border-color: var(--text-main);
+        }
+
+        /* 添加按钮 */
+        .btn-add {
+            padding: 8px 18px;
+            background: var(--primary);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .icon-plus { font-size: 16px; margin-right: 4px; line-height: 1; }
+
+        .btn-hover { transform: scale(0.95); opacity: 0.9; }
+
+        /* ====================
+           Batch Toolbar (工具栏)
+           ==================== */
+        .batch-toolbar {
+            height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            margin-bottom: 0;
+        }
+
+        .batch-toolbar.show {
+            height: 55px; /* 展开高度 */
+            opacity: 1;
+            margin-bottom: 10px;
+        }
+
+        .toolbar-content {
+            background: var(--bg-card);
+            padding: 10px 15px;
+            border-radius: var(--radius-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid rgba(0,0,0,0.03);
+        }
+
+        .check-all-group {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* 自定义复选框 */
+        .custom-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #D1D5DB;
+            border-radius: 50%;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            background: #fff;
+        }
+
+        .custom-checkbox.checked {
+            background: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.1);
+        }
+
+        .check-icon { color: #fff; font-size: 12px; font-weight: 900; }
+
+        .btn-batch-delete {
+            margin: 0;
+            background: #FEF2F2;
+            color: var(--danger);
+            font-size: 13px;
+            padding: 6px 15px;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        .btn-batch-delete.disabled { background: #F3F4F6; color: #9CA3AF; }
+        .btn-danger-hover { opacity: 0.8; transform: scale(0.98); }
+
+        /* ====================
+           Student List
+           ==================== */
+        .list-container {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .student-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 15px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid transparent;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        /* 点击态 */
+        .student-card:hover { transform: scale(0.99); background: #F9FAFB; }
+
+        /* 选中态样式 */
+        .student-card.is-selected {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 动画滑入复选框 */
+        .checkbox-wrapper {
+            margin-right: 12px;
+            animation: slideRight 0.3s ease forwards;
+        }
+
+        .avatar-box {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #E0E7FF, #DBEAFE);
+            color: var(--primary);
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            flex-shrink: 0;
+        }
+
+        .info-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .info-top {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .name {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-right: 8px;
+        }
+
+        .tag-major {
+            font-size: 10px;
+            color: var(--primary);
+            background: rgba(59, 130, 246, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .id-text {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            font-family: Monaco, Consolas, monospace;
+        }
+
+        /* 单个操作按钮 */
+        .actions-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.2s;
+            background: #F3F4F6;
+            cursor: pointer;
+        }
+
+        .btn-icon.edit { color: var(--primary); }
+        .btn-icon.delete { color: var(--text-tertiary); }
+
+        .btn-icon.edit:hover { background: var(--primary-light); }
+        .btn-icon.delete:hover { background: #FEF2F2; color: var(--danger); }
+
+        .icon-hover { transform: scale(0.9); }
+
+        /* ====================
+           Empty State
+           ==================== */
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 100px;
+        }
+
+        .empty-icon-bg {
+            width: 80px;
+            height: 80px;
+            background: #F3F4F6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            margin-bottom: 16px;
+        }
+
+        .empty-txt { font-size: 16px; font-weight: 600; color: var(--text-main); margin-bottom: 4px; }
+        .empty-sub { font-size: 13px; color: var(--text-tertiary); }
+
+        /* ====================
+           Modal
+           ==================== */
+        .modal-mask {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            width: 80%;
+            max-width: 300px;
+            background: #fff;
+            border-radius: var(--radius-xl);
+            padding: 24px 20px;
+            box-shadow: var(--shadow-md);
+        }
+
+        .modal-header { text-align: center; margin-bottom: 20px; }
+        .modal-title { font-size: 18px; font-weight: 800; color: var(--text-main); }
+
+        .form-group { margin-bottom: 16px; }
+        .label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; }
+        .input-field {
+            background: #F9FAFB;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 15px;
+            color: var(--text-main);
+            transition: all 0.3s;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .input-field:focus { background: #fff; border-color: var(--primary); }
+
+        .modal-actions { display: flex; gap: 12px; margin-top: 24px; }
+        .btn-cancel, .btn-save {
+            flex: 1;
+            font-size: 15px;
+            font-weight: 600;
+            border-radius: 25px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+        }
+        .btn-cancel { background: #F3F4F6; color: var(--text-secondary); }
+        .btn-save { background: var(--primary); color: #fff; box-shadow: 0 3px 8px rgba(59, 130, 246, 0.25); }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.8); z-index: 99;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .spinner {
+            width: 30px; height: 30px;
+            border: 3px solid #E5E7EB; border-top-color: var(--primary);
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+
+        /* Animations */
+        @keyframes slideRight { from { opacity: 0; transform: translateX(-10px); width: 0; } to { opacity: 1; transform: translateX(0); width: auto; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .slide-up { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .fade-in { animation: fadeIn 0.3s ease forwards; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="container">
+            <!-- 顶部 Header -->
+            <div class="header fade-in">
+                <div class="header-left">
+                    <span class="title">学生名册</span>
+                    <span class="subtitle">共 3 位成员在档</span>
+                </div>
+
+                <!-- 顶部操作区 -->
+                <div class="header-right">
+                    <!-- 切换多选模式 -->
+                    <div class="btn-mode">
+                        <span>管理</span>
+                    </div>
+
+                    <!-- 添加按钮 (仅在普通模式显示) -->
+                    <div class="btn-add">
+                        <span class="icon-plus">+</span> 新增
+                    </div>
+                </div>
+            </div>
+
+            <!-- 学生列表 -->
+            <div class="list-container slide-up" style="animation-delay: 0.1s;">
+                <div class="list-wrapper">
+                    <div class="student-card">
+                        <!-- 2. 头像区域 -->
+                        <div class="avatar-box">
+                            <span>张</span>
+                        </div>
+
+                        <!-- 3. 信息区域 -->
+                        <div class="info-box">
+                            <div class="info-top">
+                                <span class="name">张三</span>
+                                <span class="tag-major">计算机2301</span>
+                            </div>
+                            <span class="id-text">ID: 2023001</span>
+                        </div>
+
+                        <!-- 4. 单个操作区域 (仅普通模式) -->
+                        <div class="actions-box">
+                            <div class="btn-icon edit">✎</div>
+                            <div class="btn-icon delete">×</div>
+                        </div>
+                    </div>
+
+                    <div class="student-card">
+                        <div class="avatar-box">
+                            <span>李</span>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-top">
+                                <span class="name">李四</span>
+                                <span class="tag-major">计算机2302</span>
+                            </div>
+                            <span class="id-text">ID: 2023002</span>
+                        </div>
+                        <div class="actions-box">
+                            <div class="btn-icon edit">✎</div>
+                            <div class="btn-icon delete">×</div>
+                        </div>
+                    </div>
+
+                    <div class="student-card">
+                        <div class="avatar-box">
+                            <span>王</span>
+                        </div>
+                        <div class="info-box">
+                            <div class="info-top">
+                                <span class="name">王五</span>
+                                <span class="tag-major">计算机2303</span>
+                            </div>
+                            <span class="id-text">ID: 2023003</span>
+                        </div>
+                        <div class="actions-box">
+                            <div class="btn-icon edit">✎</div>
+                            <div class="btn-icon delete">×</div>
+                        </div>
+                    </div>
+
+                    <!-- 底部垫片 -->
+                    <div style="height: 30px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

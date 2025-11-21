@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课堂点名</title>
+    <style>
+        /* ====================
+           全局风格定义
+           ==================== */
+        body {
+            /* 核心色板 */
+            --primary: #3B82F6;         /* 现代科技蓝 */
+            --primary-dark: #2563EB;    /* 深蓝 hover态 */
+            --primary-light: #EFF6FF;   /* 浅蓝 背景态 */
+
+            --text-main: #111827;       /* 深灰黑色 */
+            --text-secondary: #4B5563;  /* 次级灰 */
+            --text-tertiary: #9CA3AF;   /* 辅助灰 */
+
+            --bg-page: #F3F4F6;         /* 页面底色 */
+            --bg-card: #FFFFFF;         /* 卡片背景 */
+
+            /* 状态色 */
+            --success: #10B981;
+            --success-bg: #ECFDF5;
+            --danger: #EF4444;
+            --danger-bg: #FEF2F2;
+
+            /* 阴影体系 */
+            --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.04);
+            --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 8px 24px rgba(59, 130, 246, 0.15); /* 带颜色的辉光 */
+
+            /* 圆角 */
+            --radius-md: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+
+            background-color: black;
+            font-family: -apple-system, "PingFang SC", "Helvetica Neue", sans-serif;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .phone {
+            width: 375px;
+            height: 667px;
+            background-color: var(--bg-page);
+            border-radius: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* ====================
+           布局容器
+           ==================== */
+        .container {
+            padding: 10px;
+            padding-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ====================
+           Header & Tabs
+           ==================== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-top: 5px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            display: block;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            margin-top: 3px;
+            display: block;
+        }
+
+        .segment-control {
+            background: #E5E7EB;
+            padding: 3px;
+            border-radius: 10px;
+            display: flex;
+        }
+
+        .segment-item {
+            padding: 6px 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .segment-item.active {
+            background: #fff;
+            color: var(--text-main);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        }
+
+        /* ====================
+           Hero Card (抽奖区)
+           ==================== */
+        .hero-section {
+            margin-bottom: 25px;
+        }
+
+        .student-card {
+            background: #fff;
+            border-radius: var(--radius-xl);
+            height: 200px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            border: 1px solid rgba(255,255,255,0.5);
+        }
+
+        /* 背景光斑 */
+        .bg-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(25px);
+            opacity: 0.5;
+            z-index: 0;
+        }
+        .blob-1 { width: 130px; height: 130px; background: #DBEAFE; top: -20px; right: -20px; }
+        .blob-2 { width: 100px; height: 100px; background: #E0E7FF; bottom: -10px; left: -10px; }
+
+        /* 待机状态 */
+        .state-empty {
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .empty-icon-wrapper {
+            width: 60px;
+            height: 60px;
+            background: var(--bg-page);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.03);
+        }
+
+        .icon-dice {
+            font-size: 30px;
+            animation: pulse-emoji 2s infinite;
+        }
+
+        .empty-hint {
+            color: var(--text-tertiary);
+            font-size: 14px;
+        }
+
+        /* 结果状态 */
+        .state-result {
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: popIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .avatar-ring {
+            padding: 3px;
+            background: linear-gradient(135deg, var(--primary), #60A5FA);
+            border-radius: 50%;
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.3);
+            margin-bottom: 10px;
+        }
+
+        .avatar {
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 25px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        .result-name {
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 4px;
+        }
+
+        .result-id {
+            font-size: 13px;
+            color: var(--text-secondary);
+            background: rgba(255,255,255,0.7);
+            padding: 2px 8px;
+            border-radius: 50px;
+        }
+
+        .shine-effect {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            animation: flash 0.5s ease-out forwards;
+            pointer-events: none;
+        }
+
+        /* ====================
+           Action Button
+           ==================== */
+        .action-section {
+            margin-bottom: 20px;
+        }
+
+        .btn-main {
+            background: var(--primary);
+            color: #fff;
+            height: 50px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 700;
+            box-shadow: 0 5px 12px rgba(59, 130, 246, 0.4);
+            border: none;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .btn-main:hover {
+            transform: scale(0.97);
+            box-shadow: 0 3px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-icon { margin-right: 6px; font-size: 18px; }
+
+        .btn-glare {
+            position: absolute;
+            top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            transform: skewX(-20deg);
+            animation: shine 3s infinite;
+        }
+
+        /* ====================
+           Evaluation Panel
+           ==================== */
+        .evaluation-panel {
+            margin-top: 20px;
+            background: #fff;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-md);
+            opacity: 0.6;
+            filter: grayscale(1);
+            pointer-events: none;
+            transform: translateY(10px);
+            transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            padding: 15px;
+        }
+
+        .evaluation-panel.is-visible {
+            opacity: 1;
+            filter: grayscale(0);
+            pointer-events: auto;
+            transform: translateY(0);
+        }
+
+        .panel-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 12px;
+            display: block;
+            padding-left: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .panel-body {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        /* 行样式 */
+        .control-row {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .row-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
+        /* 1. 考勤 Toggle */
+        .tag-toggle {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: #F3F4F6;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            border: 1px solid transparent;
+            cursor: pointer;
+        }
+
+        .toggle-icon {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 1px solid #D1D5DB;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            color: transparent;
+        }
+
+        .tag-toggle.active-green {
+            background: var(--success-bg);
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .tag-toggle.active-green .toggle-icon {
+            background: var(--success);
+            border-color: var(--success);
+            color: #fff;
+        }
+
+        .tag-toggle:hover {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* 2. 复述情况 Radio */
+        .radio-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .radio-chip {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 0;
+            background: #F3F4F6;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid transparent;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .radio-icon { margin-right: 4px; font-weight: bold; }
+
+        .radio-chip.active-green {
+            background: var(--success-bg);
+            color: var(--success);
+            border-color: var(--success);
+        }
+
+        .radio-chip.active-red {
+            background: var(--danger-bg);
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .radio-chip:hover {
+            transform: scale(0.98);
+            opacity: 0.9;
+        }
+
+        /* 3. 评分行 */
+        .score-row {
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            background: #F9FAFB;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .score-row .row-label { margin-bottom: 0; }
+
+        .input-wrapper {
+            display: flex;
+            align-items: baseline;
+            background: #fff;
+            padding: 3px 10px;
+            border-radius: 5px;
+            border: 1px solid #E5E7EB;
+        }
+
+        .score-input {
+            width: 40px;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-align: center;
+            height: 25px;
+            border: none;
+            outline: none;
+        }
+
+        .unit { font-size: 12px; color: var(--text-tertiary); margin-left: 3px; }
+
+        /* 底部 Footer */
+        .panel-footer {
+            border-top: 1px solid #F3F4F6;
+            padding-top: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .preview-bar {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .preview-label { font-size: 11px; color: var(--text-tertiary); }
+        .preview-val { font-size: 20px; font-weight: 800; color: var(--primary); }
+
+        .btn-submit {
+            margin: 0;
+            background: var(--text-main);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            border-radius: 25px;
+            padding: 0 20px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-submit:hover { opacity: 0.9; transform: scale(0.96); }
+
+        /* ====================
+           Animations
+           ==================== */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            70% { transform: scale(1.05); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes pulse-emoji {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+        @keyframes shine {
+            0% { left: -100%; }
+            20% { left: 200%; }
+            100% { left: 200%; }
+        }
+        @keyframes flash {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        .slide-up { opacity: 0; animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        .fade-in { animation: fadeIn 0.8s ease forwards; }
+    </style>
+</head>
+<body>
+    <div class="phone">
+        <div class="container">
+            <!-- 顶部导航 -->
+            <div class="header fade-in">
+                <div class="header-text">
+                    <span class="title">课堂点名</span>
+                    <span class="subtitle">随机抽取 • 公平记录</span>
+                </div>
+
+                <div class="segment-control">
+                    <div class="segment-item active">随机</div>
+                    <div class="segment-item">顺序</div>
+                </div>
+            </div>
+
+            <!-- 核心展示区：抽奖卡牌 -->
+            <div class="hero-section slide-up" style="animation-delay: 0.1s;">
+                <div class="student-card is-empty">
+                    <!-- 背景装饰光斑 -->
+                    <div class="bg-blob blob-1"></div>
+                    <div class="bg-blob blob-2"></div>
+
+                    <!-- 状态 A: 待机中 -->
+                    <div class="state-empty">
+                        <div class="empty-icon-wrapper">
+                            <span class="icon-dice">🎲</span>
+                        </div>
+                        <span class="empty-hint">点击按钮开始抽取</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 核心操作按钮 -->
+            <div class="action-section slide-up" style="animation-delay: 0.2s;">
+                <button class="btn-main">
+                    <span class="btn-icon">⚡️</span>
+                    <span>开始点名</span>
+                    <div class="btn-glare"></div>
+                </button>
+            </div>
+
+            <!-- 评价表单 (选人后上浮显示) -->
+            <!-- 假设不显示 -->
+        </div>
+    </div>
+</body>
+</html>
